@@ -24,6 +24,7 @@ export interface AddMemberResponse {
 // Interface for get members request
 export interface GetMembersRequest {
   entity_id: string;
+  search_query?: string;
 }
 
 // Interface for member data from API
@@ -98,7 +99,8 @@ export const addMember = async (
 export const getBusinessMembers = async (
   entityId: string,
   apiKey: string,
-  apiSecret: string
+  apiSecret: string,
+  searchQuery?: string
 ): Promise<GetMembersResponse> => {
   try {
     console.log('Fetching business members for entity ID:', entityId);
@@ -107,7 +109,8 @@ export const getBusinessMembers = async (
     const authHeader = `token ${apiKey}:${apiSecret}`;
     
     const requestData: GetMembersRequest = {
-      entity_id: entityId
+      entity_id: entityId,
+      ...(searchQuery ? { search_query: searchQuery } : {})
     };
     
     const response = await axios.get<GetMembersResponse>(
