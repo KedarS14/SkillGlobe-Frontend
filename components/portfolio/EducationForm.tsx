@@ -1071,7 +1071,7 @@ export default function EducationForm({
           </>
         )}
         {/* Only show the main submit button when in edit mode, not in list view */}
-        {editMode && (
+        {editMode && !isUpdateMode && (
           <button
             type="button"
             onClick={(e) => {
@@ -1088,11 +1088,12 @@ export default function EducationForm({
           >
             {isUploading
               ? "Saving..."
-              : isUpdating
-              ? "Updating..."
+              // : isUpdating
+              // ? "Updating..."
               : educationEntries.length === 0
               ? "Skip Education"
               : "Save Education"}
+     
           </button>
         )}
       </div>
