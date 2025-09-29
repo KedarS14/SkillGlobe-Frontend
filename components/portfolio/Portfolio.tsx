@@ -983,7 +983,7 @@ export default function Portfolio({
                   Loading...
                 </>
               ) : (
-                `${activeSection} Next`
+                `Next`
               )}
             </button>
           </div>
