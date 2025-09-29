@@ -256,7 +256,7 @@ export default function ExperienceForm({
         console.error("Error fetching experience list:", error);
         const newEntry = createEmptyEntry();
         setExperienceEntries([newEntry]);
-        setActiveEntryId(newEntry.id); 
+        setActiveEntryId(newEntry.id);
         setEditMode(true);
         // try {
         //   const savedEntries = localStorage.getItem("experienceEntries");
@@ -480,28 +480,31 @@ export default function ExperienceForm({
             >
               <Plus size={16} className="mr-1" /> Add Experience
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                // Find and remove any empty entries before going back to list
-                const updatedEntries = experienceEntries.filter(
-                  (entry) =>
-                    (entry.role && entry.role.trim() !== "") ||
-                    (entry.organization && entry.organization.trim() !== "") ||
-                    (entry.relevantExperience &&
-                      entry.relevantExperience.trim() !== "") ||
-                    (entry.space && entry.space.trim() !== "")
-                );
-                setExperienceEntries(updatedEntries);
+            {editMode && (
+              <button
+                type="button"
+                onClick={() => {
+                  // Find and remove any empty entries before going back to list
+                  const updatedEntries = experienceEntries.filter(
+                    (entry) =>
+                      (entry.role && entry.role.trim() !== "") ||
+                      (entry.organization &&
+                        entry.organization.trim() !== "") ||
+                      (entry.relevantExperience &&
+                        entry.relevantExperience.trim() !== "") ||
+                      (entry.space && entry.space.trim() !== "")
+                  );
+                  setExperienceEntries(updatedEntries);
 
-                // Return to list view
-                setEditMode(false);
-              }}
-              className="text-sm text-gray-600 hover:text-gray-800"
-              disabled={isUploading || isUpdating}
-            >
-              Back to List
-            </button>
+                  // Return to list view
+                  setEditMode(false);
+                }}
+                className="text-sm text-gray-600 hover:text-gray-800"
+                disabled={isUploading || isUpdating}
+              >
+                Back to List
+              </button>
+            )}
           </div>
         </div>
 
