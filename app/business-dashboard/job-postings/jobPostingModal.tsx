@@ -78,6 +78,8 @@ export default function JobPostingModal({ showModal, setShowModal, onSubmit, edi
   const genderDropdownRef = useRef<HTMLDivElement>(null);
   const languageDropdownRef = useRef<HTMLDivElement>(null);
   const locationDropdownRef = useRef<HTMLDivElement>(null);
+  const primaryAiDropdownRef = useRef<HTMLDivElement>(null);
+  const secondaryAiDropdownRef = useRef<HTMLDivElement>(null);
   
   // Ref to prevent overlapping API calls
   const isApiCallInProgress = useRef<boolean>(false);
@@ -117,6 +119,7 @@ export default function JobPostingModal({ showModal, setShowModal, onSubmit, edi
   const [primaryAiDropdownOpen, setPrimaryAiDropdownOpen] = useState<boolean>(false);
   const [primaryAiCanonicalName, setPrimaryAiCanonicalName] = useState<string>('');
   const [primaryAiSkillId, setPrimaryAiSkillId] = useState<string>('');
+  const [primaryAiInfoMessage, setPrimaryAiInfoMessage] = useState<string>('');
   
   // AI Search state for secondary skills
   const [secondaryAiSearch, setSecondaryAiSearch] = useState<string>('');
@@ -125,6 +128,7 @@ export default function JobPostingModal({ showModal, setShowModal, onSubmit, edi
   const [secondaryAiDropdownOpen, setSecondaryAiDropdownOpen] = useState<boolean>(false);
   const [secondaryAiCanonicalName, setSecondaryAiCanonicalName] = useState<string>('');
   const [secondaryAiSkillId, setSecondaryAiSkillId] = useState<string>('');
+  const [secondaryAiInfoMessage, setSecondaryAiInfoMessage] = useState<string>('');
   
   const [newJob, setNewJob] = useState<JobFormState>({
     title: '',
@@ -216,6 +220,9 @@ export default function JobPostingModal({ showModal, setShowModal, onSubmit, edi
     
     setPrimaryAiSearchLoading(true);
     try {
+      // clear any prior info and dropdown
+      setPrimaryAiInfoMessage('');
+      setPrimaryAiDropdownOpen(false);
       const payload: CreateSkillPayload = {
         gr: 1,
         skill: primaryAiSearch.trim()
@@ -228,10 +235,17 @@ export default function JobPostingModal({ showModal, setShowModal, onSubmit, edi
         setPrimaryAiCanonicalName(response.message.data.canonical_name);
         setPrimaryAiSkillId(response.message.data.skill_id);
         setPrimaryAiDropdownOpen(true);
+        setPrimaryAiInfoMessage('');
+      } else if (response.message.status === 'info' && (response.message as any).message) {
+        // Show backend info (e.g., skill already exists)
+        setPrimaryAiAliases([]);
+        setPrimaryAiDropdownOpen(false);
+        setPrimaryAiInfoMessage((response.message as any).message);
       }
     } catch (error) {
       console.error('Error in AI skill search:', error);
       setPrimaryAiAliases([]);
+      // Optionally show a generic message; keeping silent to avoid confusion
     } finally {
       setPrimaryAiSearchLoading(false);
     }
@@ -243,6 +257,9 @@ export default function JobPostingModal({ showModal, setShowModal, onSubmit, edi
     
     setSecondaryAiSearchLoading(true);
     try {
+      // clear any prior info and dropdown
+      setSecondaryAiInfoMessage('');
+      setSecondaryAiDropdownOpen(false);
       const payload: CreateSkillPayload = {
         gr: 1,
         skill: secondaryAiSearch.trim()
@@ -255,6 +272,11 @@ export default function JobPostingModal({ showModal, setShowModal, onSubmit, edi
         setSecondaryAiCanonicalName(response.message.data.canonical_name);
         setSecondaryAiSkillId(response.message.data.skill_id);
         setSecondaryAiDropdownOpen(true);
+        setSecondaryAiInfoMessage('');
+      } else if (response.message.status === 'info' && (response.message as any).message) {
+        setSecondaryAiAliases([]);
+        setSecondaryAiDropdownOpen(false);
+        setSecondaryAiInfoMessage((response.message as any).message);
       }
     } catch (error) {
       console.error('Error in AI skill search:', error);
@@ -282,6 +304,7 @@ export default function JobPostingModal({ showModal, setShowModal, onSubmit, edi
     setPrimaryAiDropdownOpen(false);
     setPrimaryAiCanonicalName('');
     setPrimaryAiSkillId('');
+    setPrimaryAiInfoMessage('');
   };
   
   // Function to select AI alias for secondary skills
@@ -302,6 +325,7 @@ export default function JobPostingModal({ showModal, setShowModal, onSubmit, edi
     setSecondaryAiDropdownOpen(false);
     setSecondaryAiCanonicalName('');
     setSecondaryAiSkillId('');
+    setSecondaryAiInfoMessage('');
   };
   
   // Function to fetch profile count based on current filters
@@ -659,6 +683,13 @@ export default function JobPostingModal({ showModal, setShowModal, onSubmit, edi
       }
       if (locationDropdownRef.current && !locationDropdownRef.current.contains(event.target as Node)) {
         setLocationDropdownOpen(false);
+      }
+      // Close AI search dropdowns when clicking outside
+      if (primaryAiDropdownRef.current && !primaryAiDropdownRef.current.contains(event.target as Node)) {
+        setPrimaryAiDropdownOpen(false);
+      }
+      if (secondaryAiDropdownRef.current && !secondaryAiDropdownRef.current.contains(event.target as Node)) {
+        setSecondaryAiDropdownOpen(false);
       }
     };
     
@@ -1335,7 +1366,10 @@ export default function JobPostingModal({ showModal, setShowModal, onSubmit, edi
             type="text"
             placeholder="Enter skill to search with AI..."
             value={primaryAiSearch}
-            onChange={(e) => setPrimaryAiSearch(e.target.value)}
+            onChange={(e) => {
+              setPrimaryAiSearch(e.target.value);
+              if (primaryAiInfoMessage) setPrimaryAiInfoMessage('');
+            }}
             className="flex-1 px-3 py-2 text-sm border border-purple-200 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
             onKeyPress={(e) => e.key === 'Enter' && handlePrimaryAiSearch()}
           />
@@ -1360,10 +1394,13 @@ export default function JobPostingModal({ showModal, setShowModal, onSubmit, edi
             )}
           </button>
         </div>
+        {primaryAiInfoMessage && (
+          <p className="mt-2 text-sm text-purple-700">{primaryAiInfoMessage}</p>
+        )}
         
         {/* AI Aliases Dropdown */}
         {primaryAiDropdownOpen && primaryAiAliases.length > 0 && (
-          <div className="mt-2 bg-white border border-purple-200 rounded-lg shadow-lg max-h-40 overflow-auto">
+          <div ref={primaryAiDropdownRef} className="mt-2 bg-white border border-purple-200 rounded-lg shadow-lg max-h-40 overflow-auto">
             <div className="p-2 border-b border-purple-100 bg-purple-50">
               <p className="text-xs text-purple-700 font-medium">
                 Found: {primaryAiCanonicalName}
@@ -1480,7 +1517,10 @@ export default function JobPostingModal({ showModal, setShowModal, onSubmit, edi
             type="text"
             placeholder="Enter skill to search with AI..."
             value={secondaryAiSearch}
-            onChange={(e) => setSecondaryAiSearch(e.target.value)}
+            onChange={(e) => {
+              setSecondaryAiSearch(e.target.value);
+              if (secondaryAiInfoMessage) setSecondaryAiInfoMessage('');
+            }}
             className="flex-1 px-3 py-2 text-sm border border-green-200 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
             onKeyPress={(e) => e.key === 'Enter' && handleSecondaryAiSearch()}
           />
@@ -1505,10 +1545,13 @@ export default function JobPostingModal({ showModal, setShowModal, onSubmit, edi
             )}
           </button>
         </div>
+        {secondaryAiInfoMessage && (
+          <p className="mt-2 text-sm text-green-700">{secondaryAiInfoMessage}</p>
+        )}
         
         {/* AI Aliases Dropdown */}
         {secondaryAiDropdownOpen && secondaryAiAliases.length > 0 && (
-          <div className="mt-2 bg-white border border-green-200 rounded-lg shadow-lg max-h-40 overflow-auto">
+          <div ref={secondaryAiDropdownRef} className="mt-2 bg-white border border-green-200 rounded-lg shadow-lg max-h-40 overflow-auto">
             <div className="p-2 border-b border-green-100 bg-green-50">
               <p className="text-xs text-green-700 font-medium">
                 Found: {secondaryAiCanonicalName}
