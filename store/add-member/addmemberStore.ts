@@ -11,10 +11,12 @@ interface AddMemberState {
   isDeactivating: boolean;
   deactivateError: string | null;
   deactivateSuccess: boolean;
+  searchQuery: string;
   addMemberToTeam: (memberData: Omit<AddMemberData, 'entity_id'>) => Promise<void>;
-  fetchBusinessMembers: () => Promise<void>;
+  fetchBusinessMembers: (searchQuery?: string) => Promise<void>;
   deactivateMember: (businessUserId: string) => Promise<void>;
   resetState: () => void;
+  setSearchQuery: (query: string) => void;
 }
 
 export const useAddMemberStore = create<AddMemberState>((set, get) => ({
@@ -27,6 +29,11 @@ export const useAddMemberStore = create<AddMemberState>((set, get) => ({
   isDeactivating: false,
   deactivateError: null,
   deactivateSuccess: false,
+  searchQuery: '',
+  
+  setSearchQuery: (query: string) => {
+    set({ searchQuery: query });
+  },
 
   addMemberToTeam: async (memberData: Omit<AddMemberData, 'entity_id'>) => {
     set({ isLoading: true, error: null, success: false });
@@ -66,7 +73,9 @@ export const useAddMemberStore = create<AddMemberState>((set, get) => ({
     }
   },
 
-  fetchBusinessMembers: async () => {
+  fetchBusinessMembers: async (searchQuery?: string) => {
+    // Use provided searchQuery or get from state
+    const query = searchQuery !== undefined ? searchQuery : get().searchQuery;
     set({ isLoadingMembers: true, membersError: null });
 
     try {
@@ -79,8 +88,8 @@ export const useAddMemberStore = create<AddMemberState>((set, get) => ({
 
       console.log('Fetching business members for entity:', authData.entityId);
 
-      // Call the API
-      const response = await getBusinessMembers(authData.entityId, authData.apiKey, authData.apiSecret);
+      // Call the API with search query if provided
+      const response = await getBusinessMembers(authData.entityId, authData.apiKey, authData.apiSecret, query);
 
       if (response.message.status === 'success') {
         set({ 

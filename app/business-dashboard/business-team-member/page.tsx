@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Users, UserPlus, Edit, Trash2, X, Eye, EyeOff } from 'lucide-react';
+import { Users, UserPlus, Edit, Trash2, X, Eye, EyeOff, Search } from 'lucide-react';
 import BusinessSidebar from '@/components/dashboard/BusinessSidebar';
 import BusinessDashboardHeader from '@/components/dashboard/BusinessDashboardHeader';
 import Image from 'next/image';
@@ -44,13 +44,30 @@ export default function AdminAccessPage() {
     deactivateMember,
     isDeactivating,
     deactivateError,
-    deactivateSuccess
+    deactivateSuccess,
+    searchQuery,
+    setSearchQuery
   } = useAddMemberStore();
 
   // Fetch members on component mount
   useEffect(() => {
     fetchBusinessMembers();
   }, [fetchBusinessMembers]);
+  
+  // Handle search input change with debounce
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+  };
+  
+  // Debounced search effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchBusinessMembers();
+    }, 500); // 500ms debounce
+    
+    return () => clearTimeout(timer);
+  }, [searchQuery, fetchBusinessMembers]);
 
   // Handle success state
   useEffect(() => {
@@ -158,8 +175,19 @@ export default function AdminAccessPage() {
         
         <main className="flex-1 overflow-y-auto p-6">
           <div className="max-w-full mx-auto bg-white rounded-xl shadow-sm p-8">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Team Members</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Team Members</h2>
+            <div className="flex justify-between items-center mb-6 mt-5">
+           
+            <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  placeholder="Search team members..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                />
+              </div>
               <button 
                 onClick={openAddModal}
                 className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg flex items-center"
@@ -168,7 +196,7 @@ export default function AdminAccessPage() {
                 Add Member
               </button>
             </div>
-            
+
             {/* Loading State */}
             {isLoadingMembers && (
               <div className="flex justify-center items-center py-12">
@@ -186,7 +214,7 @@ export default function AdminAccessPage() {
                   <p className="text-sm text-gray-600 mt-1">{membersError}</p>
                 </div>
                 <button
-                  onClick={fetchBusinessMembers}
+                  onClick={() => fetchBusinessMembers()}
                   className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
                 >
                   Retry
@@ -198,8 +226,26 @@ export default function AdminAccessPage() {
             {!isLoadingMembers && !membersError && teamMembers.length === 0 && (
               <div className="text-center py-12">
                 <Users size={48} className="mx-auto mb-4 text-gray-400" />
-                <p className="text-lg font-medium text-gray-600">No team members found</p>
-                <p className="text-sm text-gray-500 mt-1">Add your first team member to get started</p>
+                {searchQuery ? (
+                  <>
+                    <p className="text-lg font-medium text-gray-600">No team members match your search</p>
+                    <p className="text-sm text-gray-500 mt-1">Try a different search term or clear the search</p>
+                    <button 
+                      onClick={() => {
+                        setSearchQuery('');
+                        fetchBusinessMembers('');
+                      }}
+                      className="mt-4 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors"
+                    >
+                      Clear Search
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-lg font-medium text-gray-600">No team members found</p>
+                    <p className="text-sm text-gray-500 mt-1">Add your first team member to get started</p>
+                  </>
+                )}
               </div>
             )}
 
