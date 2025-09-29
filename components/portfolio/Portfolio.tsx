@@ -821,6 +821,19 @@ export default function Portfolio({
                     </div>
                   </div>
                 </div>
+                {/* preview resume */}
+                <div>
+                  {error1 && <p className="text-red-500 mt-2">{error1}</p>}
+                  {pdfUrl && (
+                    <div className="mt-4 h-[500px] border rounded-lg overflow-hidden">
+                      <iframe
+                        src={pdfUrl}
+                        title="Resume Preview"
+                        className="w-full h-full"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -904,19 +917,6 @@ export default function Portfolio({
               </button>
             </div>
           )}
-      </div>
-      {/* preview resume */}
-      <div>
-        {error1 && <p className="text-red-500 mt-2">{error1}</p>}
-        {pdfUrl && (
-          <div className="mt-4 h-[500px] border rounded-lg overflow-hidden">
-            <iframe
-              src={pdfUrl}
-              title="Resume Preview"
-              className="w-full h-full"
-            />
-          </div>
-        )}
       </div>
 
       {/* Smart Parsing Benefits */}
