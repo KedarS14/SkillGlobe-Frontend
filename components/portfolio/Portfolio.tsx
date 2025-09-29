@@ -22,6 +22,7 @@ import {
   getPortfolio,
   getAuthData,
 } from "../../app/api/portfolio/getPortfolio";
+import { fetchResumePreviewAPI } from "@/app/api/portfolio/previewResumeAPI";
 
 interface PortfolioProps {
   activeSection?: string;
@@ -129,6 +130,11 @@ export default function Portfolio({
   const [experience, setExperience] = useState([]);
   const [certificates, setCertificates] = useState([]);
   const [certificateList, setCertificateList] = useState<any[]>([]);
+
+  // preview resume
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [loading1, setLoading1] = useState(false);
+  const [error1, setError1] = useState<string | null>(null);
 
   // Load saved data from localStorage and API on component mount
   useEffect(() => {
@@ -485,7 +491,12 @@ export default function Portfolio({
         if (result.success) {
           updateResumeUploaded(true);
           setFlag2UpdateResume(false);
-          setResumeUrl(result?.data.resume_url);  
+          //make preview url null first to refresh iframe
+          setPdfUrl(null);
+          setLoading1(false);
+          setError1(null);
+
+          setResumeUrl(result?.data.resume_url);
           // After resume is uploaded, automatically switch to personal info section
           setTimeout(() => {
             setActiveSection("personal");
@@ -661,9 +672,43 @@ export default function Portfolio({
   };
 
   const handleUpdateResume = () => {
-    console.log("handleUpdateResume");
     setFlag2UpdateResume(true);
   };
+
+  const handlePreview = async () => {
+    setLoading1(true);
+    setError1(null);
+    try {
+      const response = await fetchResumePreviewAPI();
+
+      if (
+        response.message?.status === "success" &&
+        response.message.data?.file_content
+      ) {
+        const { file_content, content_type, file_name } = response.message.data;
+
+        // Convert base64 to Blob
+        const byteCharacters = atob(file_content);
+        const byteNumbers = new Array(byteCharacters.length)
+          .fill(0)
+          .map((_, i) => byteCharacters.charCodeAt(i));
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: content_type });
+
+        // Create object URL and set to state
+        const url = URL.createObjectURL(blob);
+        setPdfUrl(url);
+      } else {
+        setError1("Resume data not available");
+      }
+    } catch (err) {
+      console.error(err);
+      setError1("Failed to fetch resume preview");
+    } finally {
+      setLoading1(false);
+    }
+  };
+
   return (
     <div
       className={`bg-white rounded-xl w-full shadow-sm p-3 space-y-6 font-rubik ${className}`}
@@ -761,13 +806,8 @@ export default function Portfolio({
                     {/* Open Resume Button */}
                     <div className="mt-3 flex space-x-3">
                       <button
-                        onClick={() =>
-                          window.open(
-                            `${process.env.NEXT_PUBLIC_API_BASE_URL}${resumeUrl}`,
-                            "_blank",
-                            "noopener,noreferrer"
-                          )
-                        }
+                        onClick={handlePreview}
+                        disabled={loading1}
                         className="mt-2 px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg shadow-sm"
                       >
                         Preview
@@ -864,6 +904,19 @@ export default function Portfolio({
               </button>
             </div>
           )}
+      </div>
+      {/* preview resume */}
+      <div>
+        {error1 && <p className="text-red-500 mt-2">{error1}</p>}
+        {pdfUrl && (
+          <div className="mt-4 h-[500px] border rounded-lg overflow-hidden">
+            <iframe
+              src={pdfUrl}
+              title="Resume Preview"
+              className="w-full h-full"
+            />
+          </div>
+        )}
       </div>
 
       {/* Smart Parsing Benefits */}
