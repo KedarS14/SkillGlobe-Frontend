@@ -70,6 +70,7 @@ export default function Portfolio({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [flag1resume, setFlag1resume] = useState<boolean>(false);
+  const [flag2UpdateResume, setFlag2UpdateResume] = useState<boolean>(false);
   const [resumeUrl, setResumeUrl] = useState<string>("");
 
   // Use props if provided, otherwise use local state
@@ -483,6 +484,8 @@ export default function Portfolio({
 
         if (result.success) {
           updateResumeUploaded(true);
+          setFlag2UpdateResume(false);
+          setResumeUrl(result?.data.resume_url);  
           // After resume is uploaded, automatically switch to personal info section
           setTimeout(() => {
             setActiveSection("personal");
@@ -657,6 +660,10 @@ export default function Portfolio({
     }
   };
 
+  const handleUpdateResume = () => {
+    console.log("handleUpdateResume");
+    setFlag2UpdateResume(true);
+  };
   return (
     <div
       className={`bg-white rounded-xl w-full shadow-sm p-3 space-y-6 font-rubik ${className}`}
@@ -674,53 +681,70 @@ export default function Portfolio({
               information to build your profile
             </p>
 
-            {!resumeUploaded ? (
-              <label
-                className={`block ${
-                  isUploading ? "opacity-50 pointer-events-none" : ""
-                }`}
-              >
-                <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-orange-500 transition-colors cursor-pointer">
-                  {isUploading ? (
-                    <Loader2
-                      className="mx-auto text-blue-500 mb-2 animate-spin"
-                      size={24}
-                    />
-                  ) : (
-                    <Upload className="mx-auto text-gray-400 mb-2" size={24} />
-                  )}
-                  <p className="text-sm font-medium text-gray-900">
-                    {isUploading
-                      ? `Uploading resume (${uploadProgress}%)`
-                      : "Upload your resume"}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    PDF, DOC, DOCX (max 10MB)
-                  </p>
+            {!resumeUploaded || flag2UpdateResume ? (
+              <div>
+                <label
+                  className={`block ${
+                    isUploading ? "opacity-50 pointer-events-none" : ""
+                  }`}
+                >
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-orange-500 transition-colors cursor-pointer">
+                    {isUploading ? (
+                      <Loader2
+                        className="mx-auto text-blue-500 mb-2 animate-spin"
+                        size={24}
+                      />
+                    ) : (
+                      <Upload
+                        className="mx-auto text-gray-400 mb-2"
+                        size={24}
+                      />
+                    )}
+                    <p className="text-sm font-medium text-gray-900">
+                      {isUploading
+                        ? `Uploading resume (${uploadProgress}%)`
+                        : "Upload your resume"}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      PDF, DOC, DOCX (max 10MB)
+                    </p>
 
-                  {/* Show error message if upload failed */}
-                  {error && (
-                    <p className="text-xs text-red-500 mt-2">{error}</p>
-                  )}
+                    {/* Show error message if upload failed */}
+                    {error && (
+                      <p className="text-xs text-red-500 mt-2">{error}</p>
+                    )}
 
-                  {/* Show upload progress bar */}
-                  {isUploading && (
-                    <div className="w-full h-2 bg-gray-200 rounded-full mt-3">
-                      <div
-                        className="h-full bg-blue-500 rounded-full"
-                        style={{ width: `${uploadProgress}%` }}
-                      ></div>
-                    </div>
-                  )}
-                </div>
-                <input
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  onChange={handleResumeUpload}
-                  className="hidden"
-                  disabled={isUploading}
-                />
-              </label>
+                    {/* Show upload progress bar */}
+                    {isUploading && (
+                      <div className="w-full h-2 bg-gray-200 rounded-full mt-3">
+                        <div
+                          className="h-full bg-blue-500 rounded-full"
+                          style={{ width: `${uploadProgress}%` }}
+                        ></div>
+                      </div>
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    onChange={handleResumeUpload}
+                    className="hidden"
+                    disabled={isUploading}
+                  />
+                </label>
+                {/* Cancel Button (only in update mode) */}
+                {flag2UpdateResume && (
+                  <div className="mt-4 flex justify-center">
+                    <button
+                      onClick={() => setFlag2UpdateResume(false)}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg shadow-sm"
+                      disabled={isUploading}
+                    >
+                      Cancel Resume Update
+                    </button>
+                  </div>
+                )}{" "}
+              </div>
             ) : (
               <div className="bg-green-50 p-4 rounded-xl border border-green-200">
                 <div className="flex items-center space-x-3">
@@ -735,26 +759,26 @@ export default function Portfolio({
                       Your resume data has been loaded from your portfolio.
                     </p>
                     {/* Open Resume Button */}
-                    <button
-                      onClick={() =>
-                        window.open(
-                          `${process.env.NEXT_PUBLIC_API_BASE_URL}${resumeUrl}`,
-                          "_blank",
-                          "noopener,noreferrer"
-                        )
-                      }
-                      className="mt-2 px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg shadow-sm"
-                    >
-                      Preview
-                    </button>
-                    {/* Download Button */}
-                    {/* <a
-                      href={`${process.env.NEXT_PUBLIC_API_BASE_URL}${resumeUrl}`}
-                      download
-                      className="px-4 py-2 text-sm font-medium text-green-700 bg-green-100 hover:bg-green-200 rounded-lg shadow-sm"
-                    >
-                      Download
-                    </a> */}
+                    <div className="mt-3 flex space-x-3">
+                      <button
+                        onClick={() =>
+                          window.open(
+                            `${process.env.NEXT_PUBLIC_API_BASE_URL}${resumeUrl}`,
+                            "_blank",
+                            "noopener,noreferrer"
+                          )
+                        }
+                        className="mt-2 px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg shadow-sm"
+                      >
+                        Preview
+                      </button>
+                      <button
+                        onClick={handleUpdateResume}
+                        className="mt-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm"
+                      >
+                        Update Resume
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
