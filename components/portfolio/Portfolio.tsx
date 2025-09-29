@@ -585,6 +585,20 @@ export default function Portfolio({
   const [portfolioData, setPortfolioData] = useState<any>(null);
   const [apiError, setApiError] = useState<string | null>(null);
 
+  const handleNext = () => {
+    const sectionFlow: Record<string, string> = {
+      resume: "personal",
+      personal: "education",
+      education: "experience",
+      experience: "certificates",
+      // certificates: null, // or loop back to something else if needed
+    };
+
+    if (activeSection in sectionFlow) {
+      setActiveSection?.(sectionFlow[activeSection]);
+    }
+  };
+
   const handleContinue = async () => {
     setIsLoading(true);
     setApiError(null);
@@ -950,12 +964,14 @@ export default function Portfolio({
           </div>
         )}
 
-        {activeSection === "resume" && flag1resume === true ? (
+        {(activeSection === "resume" && flag1resume === true) ||
+        activeSection === "certificates" ? (
           <div className="flex space-x-3"></div>
         ) : (
           <div className="flex space-x-3">
             <button
-              onClick={handleContinue}
+              onClick={handleNext}
+              // onClick={handleContinue}
               disabled={isLoading}
               className={`max-w-xs mx-auto flex-1 ${
                 isLoading ? "bg-blue-400" : "bg-blue-500 hover:shadow-lg"
@@ -967,7 +983,7 @@ export default function Portfolio({
                   Loading...
                 </>
               ) : (
-                "Submit"
+                `${activeSection} Next`
               )}
             </button>
           </div>
@@ -976,7 +992,8 @@ export default function Portfolio({
 
       {/* Submit Form Modal */}
       <SubmitFormModal
-        isOpen={isModalOpen}
+        isOpen={false}
+        // isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleModalSubmit}
         portfolioData={portfolioData}
