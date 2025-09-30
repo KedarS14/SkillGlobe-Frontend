@@ -495,12 +495,12 @@ export default function Portfolio({
           setPdfUrl(null);
           setLoading1(false);
           setError1(null);
-
           setResumeUrl(result?.data.resume_url);
+
           // After resume is uploaded, automatically switch to personal info section
-          setTimeout(() => {
-            setActiveSection("personal");
-          }, 1000);
+          // setTimeout(() => {
+          //   setActiveSection("personal");
+          // }, 1000);
         } else {
           // Handle upload failure
           console.error("Resume upload failed");

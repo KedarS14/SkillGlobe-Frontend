@@ -824,7 +824,7 @@ export default function EducationForm({
                               ? "border-red-500"
                               : "border-gray-300"
                           }`}
-                          placeholder="E.g., 85% or 3.8 CGPA"
+                          placeholder="Eg. 85 for percentage or 3.8 for CGPA"
                         />
                         {entry.score && !validateScore(entry.score) && (
                           <p className="text-xs text-red-500 mt-1">
@@ -833,7 +833,8 @@ export default function EducationForm({
                         )}
                         {validateScore(entry.score) && (
                           <p className="text-xs text-gray-500 mt-1">
-                            %, CGPA or other scoring system
+                            {/* %, CGPA or other scoring system */}
+                            Only provide the score without % or CGPA.
                           </p>
                         )}
                       </div>
