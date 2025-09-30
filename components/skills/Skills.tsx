@@ -752,7 +752,7 @@ export default function Skills({
             <p className="text-blue-900 font-medium mb-1">Pro Tip</p>
             <p className="text-blue-700">
               Select skills that best represent your expertise. You can always
-              add more later in your profile
+              add more later.
             </p>
           </div>
         </div>

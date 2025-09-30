@@ -182,9 +182,9 @@ export default function ExperienceForm({
     const errors: { [key: string]: string } = {};
 
     // Mandatory fields
-    if (!activeEntry.space) {
-      errors.space = "Industry is required";
-    }
+    // if (!activeEntry.space) {
+    //   errors.space = "Industry is required";
+    // }
     if (!activeEntry.role) {
       errors.role = "Role / Designation is required";
     }
@@ -582,7 +582,8 @@ export default function ExperienceForm({
                     {/* Space/Industry */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Space <span className="text-red-500">*</span>
+                        Domain
+                        {/* <span className="text-red-500">*</span> */}
                       </label>
                       <div className="relative">
                         <Building
@@ -735,7 +736,7 @@ export default function ExperienceForm({
                     setCurrentEntryName("");
                   }}
                 >
-                  Save Experience
+                  Save
                 </button>
               </>
             )}
