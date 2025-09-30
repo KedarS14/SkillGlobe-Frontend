@@ -341,7 +341,7 @@ export default function JobPostingsPage() {
     <div className="flex h-screen bg-gray-100 font-rubik">
       <BusinessSidebar />
       
-      <div className="flex-1 flex flex-col overflow-hidden pl-64">
+      <div className="flex-1 flex flex-col overflow-scroll pl-64">
         <BusinessDashboardHeader title="Opportunity Postings" />
         
         <div className="flex-1 bg-gray-50 p-8">
