@@ -1489,7 +1489,7 @@ export default function JobPostingModal({ showModal, setShowModal, onSubmit, edi
               );
             })
           ) : (
-            <p className="text-sm text-gray-500 italic">No primary skills select</p>
+            <p className="text-sm text-gray-500 italic">No primary skills selected</p>
           )}
         </div>
       </div>
