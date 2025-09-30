@@ -88,7 +88,7 @@ export interface ClosedOpportunitiesResponse {
   };
 }
 
-export const getJobPostingList = async (entityId: string): Promise<JobPostingListResponse> => {
+export const getJobPostingList = async (entityId: string, searchQuery?: string): Promise<JobPostingListResponse> => {
   try {
     // Get API credentials
     const { apiKey, apiSecret } = getApiCredentials();
@@ -96,8 +96,17 @@ export const getJobPostingList = async (entityId: string): Promise<JobPostingLis
     // Create authorization header using API key and secret
     const authHeader = `token ${apiKey}:${apiSecret}`;
     
+    // Build URL with query parameters
+    const url = new URL(`${API_BASE_URL}/api/method/skillglobe_be.api.opportunity_posting.list.get_job_posting_list`);
+    
+    // Add parameters
+    url.searchParams.append('entity_id', entityId);
+    if (searchQuery && searchQuery.trim() !== '') {
+      url.searchParams.append('search_query', searchQuery.trim());
+    }
+    
     const response = await axios.get<JobPostingListResponse>(
-      `${API_BASE_URL}/api/method/skillglobe_be.api.opportunity_posting.list.get_job_posting_list?entity_id=${entityId}`,
+      url.toString(),
       {
         headers: {
           'Accept': 'application/json',

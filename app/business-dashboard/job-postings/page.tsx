@@ -74,7 +74,9 @@ export default function JobPostingsPage() {
     jobPostings: apiJobPostings, 
     isLoading, 
     error, 
-    getJobPostings 
+    getJobPostings,
+    searchQuery,
+    setSearchQuery 
   } = useJobPostingListStore();
   
   // Use the closed opportunities store
@@ -135,6 +137,23 @@ export default function JobPostingsPage() {
     
     fetchJobPostings();
   }, [getJobPostings, entityId]);
+  
+  // Handle search input change with debounce
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+  };
+  
+  // Debounced search effect
+  useEffect(() => {
+    if (!entityId) return;
+    
+    const timer = setTimeout(() => {
+      getJobPostings(entityId);
+    }, 500); // 500ms debounce
+    
+    return () => clearTimeout(timer);
+  }, [searchQuery, getJobPostings, entityId]);
   
   // Helper function to parse location from API format using city list
   const parseLocationFromAPI = (locationData: any): string => {
@@ -369,6 +388,8 @@ export default function JobPostingsPage() {
                 <input
                   type="text"
                   placeholder="Search job postings..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
                   className="w-1/3 pl-10 pr-4 py-2 bg-gray-50 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
                 />
               </div>
