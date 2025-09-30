@@ -332,11 +332,46 @@ export default function JobPostingModal({ showModal, setShowModal, onSubmit, edi
       const response: CreateSkillResponse = await createGlobalSkillAPI(payload);
       
       if (response.message.status === 'success' && response.message.data) {
+        const skillId = response.message.data.skill_id;
+        const canonicalName = response.message.data.canonical_name;
+        
+        // Store the skill ID and canonical name
         setSecondaryAiAliases(response.message.data.aliases);
-        setSecondaryAiCanonicalName(response.message.data.canonical_name);
-        setSecondaryAiSkillId(response.message.data.skill_id);
+        setSecondaryAiCanonicalName(canonicalName);
+        setSecondaryAiSkillId(skillId);
         setSecondaryAiDropdownOpen(true);
         setSecondaryAiInfoMessage('');
+        
+        console.log('Secondary AI search found skill:', skillId, 'with canonical name:', canonicalName);
+        
+        // Update the mapping between skill code and canonical name
+        if (skillId && skillId.startsWith('SK-')) {
+          setSkillCodeToNameMap(prev => {
+            const updatedMap = {
+              ...prev,
+              [skillId]: canonicalName
+            };
+            console.log('Updated skill code to name map in secondary search:', updatedMap);
+            return updatedMap;
+          });
+          
+          // Also check if this skill is already in the list but with the code showing instead of name
+          const existingSkills = [...newJob.secondarySkills];
+          const updatedSkills = existingSkills.map(existingSkill => {
+            if (existingSkill === skillId) {
+              console.log('Found existing secondary skill with code, updating display name');
+              return skillId; // Keep the code but update the mapping
+            }
+            return existingSkill;
+          });
+          
+          if (JSON.stringify(existingSkills) !== JSON.stringify(updatedSkills)) {
+            setNewJob(prev => ({
+              ...prev,
+              secondarySkills: updatedSkills
+            }));
+          }
+        }
       } else if (response.message.status === 'info' && (response.message as any).message) {
         setSecondaryAiAliases([]);
         setSecondaryAiDropdownOpen(false);
@@ -388,8 +423,23 @@ export default function JobPostingModal({ showModal, setShowModal, onSubmit, edi
   
   // Function to select AI alias for secondary skills
   const selectSecondaryAiAlias = (alias: string) => {
-    // Create a skill object with the canonical name as the name (to match existing structure)
-    const skillToAdd = secondaryAiCanonicalName;
+    // Use the skill ID (SK-xxxxxxxxxx) instead of the canonical name
+    const skillToAdd = secondaryAiSkillId || secondaryAiCanonicalName;
+    
+    console.log('Adding secondary AI skill with ID:', skillToAdd, 'Canonical name:', secondaryAiCanonicalName);
+    
+    // Store the mapping between skill code and canonical name
+    if (secondaryAiSkillId && secondaryAiSkillId.startsWith('SK-')) {
+      // Make sure we store the mapping between skill code and canonical name
+      setSkillCodeToNameMap(prev => {
+        const updatedMap = {
+          ...prev,
+          [secondaryAiSkillId]: secondaryAiCanonicalName
+        };
+        console.log('Updated skill code to name map for secondary skill:', updatedMap);
+        return updatedMap;
+      });
+    }
     
     if (!newJob.secondarySkills.includes(skillToAdd)) {
       setNewJob(prev => ({
@@ -1439,7 +1489,7 @@ export default function JobPostingModal({ showModal, setShowModal, onSubmit, edi
               );
             })
           ) : (
-            <p className="text-sm text-gray-500 italic">No primary skills select</p>
+            <p className="text-sm text-gray-500 italic">No primary skills selected</p>
           )}
         </div>
       </div>
@@ -1574,14 +1624,25 @@ export default function JobPostingModal({ showModal, setShowModal, onSubmit, edi
           {newJob.secondarySkills.length > 0 ? (
             newJob.secondarySkills.map((skillId) => {
               const skill = availableSkills.find(s => s.name === skillId);
-              // If skill is not found in availableSkills, it's likely from AI search (already canonical name)
-              const displayName = skill?.canonical_name || skillId;
+              
+              // Determine if this is an SK code (from AI search)
+              const isSkCode = typeof skillId === 'string' && skillId.startsWith('SK-');
+              
+              // Get the display name for the skill using our utility function
+              const displayName = getSkillDisplayName(skillId);
+              
+              // Log for debugging
+              if (isSkCode) {
+                console.log('Displaying secondary SK code skill:', skillId, 'as:', displayName);
+              }
+              
               return (
                 <div key={skillId} className="inline-flex items-center bg-green-100 text-green-800 rounded-full px-3 py-1 text-sm mr-2 mb-2">
                   {displayName}
-                  {!skill && (
+                  {/* Hide the AI badge as requested */}
+                  {/* {(isSkCode || !skill) && (
                     <span className="ml-1 text-xs bg-purple-200 text-purple-700 px-1 rounded">AI</span>
-                  )}
+                  )} */}
                   <button 
                     type="button"
                     className="ml-1 text-blue-600 hover:text-blue-800"
