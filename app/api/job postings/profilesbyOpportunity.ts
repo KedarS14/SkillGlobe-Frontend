@@ -191,7 +191,8 @@ export const getProfilesByOpportunity = async (
   entityId: string,
   opportunityPostingId: string,
   apiKey: string,
-  apiSecret: string
+  apiSecret: string,
+  searchQuery?: string
 ): Promise<ProfilesByOpportunityResponse> => {
   try {
     // Validate required parameters
@@ -218,15 +219,22 @@ export const getProfilesByOpportunity = async (
     // API endpoint with query parameters
     const url = `${API_BASE_URL}/api/method/skillglobe_be.api.opportunity_posting.dashboard.profiles_by_opportunity`;
 
+    const params: Record<string, string> = {
+      entity_id: entityId,
+      opportunity_posting_id: opportunityPostingId,
+    };
+    
+    // Add search query if provided
+    if (searchQuery && searchQuery.trim() !== '') {
+      params.search_query = searchQuery.trim();
+    }
+    
     const response = await axios.get<ProfilesByOpportunityResponse>(url, {
       headers: {
         Authorization: authHeader,
         Accept: "application/json",
       },
-      params: {
-        entity_id: entityId,
-        opportunity_posting_id: opportunityPostingId,
-      },
+      params,
     });
 
     console.log("Profiles by opportunity response:", response.data);
