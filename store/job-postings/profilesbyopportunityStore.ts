@@ -183,14 +183,16 @@ interface ProfilesByOpportunityState {
   totalProfiles: number;
   totalPages: number;
   currentPage: number;
+  searchQuery: string;
 
   // Actions
-  fetchProfilesByOpportunity: (opportunityPostingId: string) => Promise<void>;
+  fetchProfilesByOpportunity: (opportunityPostingId: string, searchQuery?: string) => Promise<void>;
   updateApplicantStatus: (
     applicantId: string,
     newStatus: Applicant["status"]
   ) => Promise<void>;
   setJobDetails: (jobDetails: JobDetails) => void;
+  setSearchQuery: (query: string) => void;
   clearError: () => void;
   resetStore: () => void;
 }
@@ -205,6 +207,7 @@ const initialState = {
   totalProfiles: 0,
   totalPages: 0,
   currentPage: 1,
+  searchQuery: '',
 };
 
 // Create the store
@@ -212,8 +215,13 @@ export const useProfilesByOpportunityStore = create<ProfilesByOpportunityState>(
   (set, get) => ({
     ...initialState,
 
+    // Set search query
+    setSearchQuery: (query: string) => {
+      set({ searchQuery: query });
+    },
+    
     // Fetch profiles by opportunity data
-    fetchProfilesByOpportunity: async (opportunityPostingId: string) => {
+    fetchProfilesByOpportunity: async (opportunityPostingId: string, searchQuery?: string) => {
       try {
         set({ isLoading: true, error: null });
 
@@ -231,13 +239,17 @@ export const useProfilesByOpportunityStore = create<ProfilesByOpportunityState>(
 
         console.log("Fetching profiles for opportunity:", opportunityPostingId);
 
+        // Use provided searchQuery or get from state
+        const query = searchQuery !== undefined ? searchQuery : get().searchQuery;
+        
         // Call the API
         const response: ProfilesByOpportunityResponse =
           await getProfilesByOpportunity(
             entityId,
             opportunityPostingId,
             apiKey,
-            apiSecret
+            apiSecret,
+            query
           );
 
         // Check if the response is successful
