@@ -6,20 +6,29 @@ interface JobPostingListState {
   entityId: string;
   isLoading: boolean;
   error: string | null;
-  getJobPostings: (entityId: string) => Promise<{ success: boolean }>;
+  searchQuery: string;
+  getJobPostings: (entityId: string, searchQuery?: string) => Promise<{ success: boolean }>;
+  setSearchQuery: (query: string) => void;
   resetState: () => void;
 }
 
-export const useJobPostingListStore = create<JobPostingListState>((set) => ({
+export const useJobPostingListStore = create<JobPostingListState>((set, get) => ({
   jobPostings: [],
   entityId: '',
   isLoading: false,
   error: null,
+  searchQuery: '',
   
-  getJobPostings: async (entityId: string) => {
+  setSearchQuery: (query: string) => {
+    set({ searchQuery: query });
+  },
+  
+  getJobPostings: async (entityId: string, searchQuery?: string) => {
+    // Use provided searchQuery or get from state
+    const query = searchQuery !== undefined ? searchQuery : get().searchQuery;
     set({ isLoading: true, error: null });
     try {
-      const response = await getJobPostingList(entityId);
+      const response = await getJobPostingList(entityId, query);
       
       console.log('Job posting list store response:', response);
       

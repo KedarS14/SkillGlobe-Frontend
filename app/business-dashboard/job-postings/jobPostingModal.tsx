@@ -992,10 +992,12 @@ export default function JobPostingModal({ showModal, setShowModal, onSubmit, edi
         required
       >
         <option value="Permanent">Permanent</option>
-        <option value="Contract2Perm">Contract2Perm</option>
+        <option value="Contract2Hire">Contract2Hire</option>
         <option value="Internship">Internship</option>
-        <option value="Project / Gig">Project / Gig</option>
+        <option value="Project">Project</option>
+        <option value="Services / Gig">Services / Gig</option>
         <option value="Contractual / Freelancer Work">Contractual / Freelancer Work</option>
+        <option value="All">All</option>
       </select>
     </div>
     </div>
