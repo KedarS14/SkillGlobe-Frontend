@@ -121,6 +121,9 @@ export default function JobPostingModal({ showModal, setShowModal, onSubmit, edi
   const [primaryAiSkillId, setPrimaryAiSkillId] = useState<string>('');
   const [primaryAiInfoMessage, setPrimaryAiInfoMessage] = useState<string>('');
   
+  // Store mapping between SK codes and their canonical names
+  const [skillCodeToNameMap, setSkillCodeToNameMap] = useState<Record<string, string>>({});
+  
   // AI Search state for secondary skills
   const [secondaryAiSearch, setSecondaryAiSearch] = useState<string>('');
   const [secondaryAiSearchLoading, setSecondaryAiSearchLoading] = useState<boolean>(false);
@@ -231,11 +234,25 @@ export default function JobPostingModal({ showModal, setShowModal, onSubmit, edi
       const response: CreateSkillResponse = await createGlobalSkillAPI(payload);
       
       if (response.message.status === 'success' && response.message.data) {
+        const skillId = response.message.data.skill_id;
+        const canonicalName = response.message.data.canonical_name;
+        
+        // Store the skill ID and canonical name
         setPrimaryAiAliases(response.message.data.aliases);
-        setPrimaryAiCanonicalName(response.message.data.canonical_name);
-        setPrimaryAiSkillId(response.message.data.skill_id);
+        setPrimaryAiCanonicalName(canonicalName);
+        setPrimaryAiSkillId(skillId);
         setPrimaryAiDropdownOpen(true);
         setPrimaryAiInfoMessage('');
+        
+        console.log('AI search found skill:', skillId, 'with canonical name:', canonicalName);
+        
+        // Update the mapping between skill code and canonical name
+        if (skillId && skillId.startsWith('SK-')) {
+          setSkillCodeToNameMap(prev => ({
+            ...prev,
+            [skillId]: canonicalName
+          }));
+        }
       } else if (response.message.status === 'info' && (response.message as any).message) {
         // Show backend info (e.g., skill already exists)
         setPrimaryAiAliases([]);
@@ -288,8 +305,18 @@ export default function JobPostingModal({ showModal, setShowModal, onSubmit, edi
   
   // Function to select AI alias for primary skills
   const selectPrimaryAiAlias = (alias: string) => {
-    // Create a skill object with the canonical name as the name (to match existing structure)
-    const skillToAdd = primaryAiCanonicalName;
+    // Use the skill ID (SK-xxxxxxxxxx) instead of the canonical name
+    const skillToAdd = primaryAiSkillId || primaryAiCanonicalName;
+    
+    console.log('Adding AI skill with ID:', skillToAdd, 'Canonical name:', primaryAiCanonicalName);
+    
+    // Store the mapping between skill code and canonical name
+    if (primaryAiSkillId && primaryAiSkillId.startsWith('SK-')) {
+      setSkillCodeToNameMap(prev => ({
+        ...prev,
+        [primaryAiSkillId]: primaryAiCanonicalName
+      }));
+    }
     
     if (!newJob.primarySkills.includes(skillToAdd)) {
       setNewJob(prev => ({
@@ -1331,12 +1358,27 @@ export default function JobPostingModal({ showModal, setShowModal, onSubmit, edi
           {newJob.primarySkills.length > 0 ? (
             newJob.primarySkills.map((skillId) => {
               const skill = availableSkills.find(s => s.name === skillId);
-              // If skill is not found in availableSkills, it's likely from AI search (already canonical name)
-              const displayName = skill?.canonical_name || skillId;
+              
+              // Determine if this is an SK code (from AI search)
+              const isSkCode = typeof skillId === 'string' && skillId.startsWith('SK-');
+              
+              // If it's an SK code, we want to display the canonical name but keep the SK code internally
+              // For regular skills, use the canonical name from availableSkills
+              let displayName;
+              
+              if (isSkCode) {
+                // Use the stored mapping between skill code and canonical name
+                displayName = skillCodeToNameMap[skillId] || skillId;
+                console.log('Displaying SK code skill:', skillId, 'as:', displayName);
+              } else {
+                // For regular skills, use the canonical name from availableSkills
+                displayName = skill?.canonical_name || skillId;
+              }
+              
               return (
                 <div key={skillId} className="inline-flex items-center bg-blue-100 text-blue-800 rounded-full px-3 py-1 text-sm mr-2 mb-2">
                   {displayName}
-                  {!skill && (
+                  {(isSkCode || !skill) && (
                     <span className="ml-1 text-xs bg-purple-200 text-purple-700 px-1 rounded">AI</span>
                   )}
                   <button 
