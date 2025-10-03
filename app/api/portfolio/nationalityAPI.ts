@@ -17,38 +17,6 @@ export interface NationalityListResponse {
 }
 
 /**
- * Fetch nationalities from the API
- * @returns Promise with the response containing nationality list
- */
-export const fetchNationalitiesAPI =
-  async (): Promise<NationalityListResponse> => {
-    try {
-      const authData = getAuthData();
-      if (!authData) {
-        throw new Error("Authentication data not found. Please log in again.");
-      }
-
-      const response = await axios.get<NationalityListResponse>(
-        `${API_BASE_URL}/api/method/skillglobe_be.api.portfolio.nationality.get_nationality`,
-        {
-          headers: {
-            Authorization: `token ${authData.apiKey}:${authData.apiSecret}`,
-            Accept: "application/json",
-          },
-        }
-      );
-      
-      return response.data;
-    } catch (error: any) {
-      console.error(
-        "Get nationalities error:",
-        error.response?.data || error.message || error
-      );
-      throw error;
-    }
-  };
-
-/**
  * Get authentication data from local storage
  * @returns Object containing entity ID, API key, and API secret
  */
@@ -132,3 +100,35 @@ export const getAuthData = () => {
 
   return null;
 };
+
+/**
+ * Fetch nationalities from the API
+ * @returns Promise with the response containing nationality list
+ */
+export const fetchNationalitiesAPI =
+  async (): Promise<NationalityListResponse> => {
+    try {
+      const authData = getAuthData();
+      if (!authData) {
+        throw new Error("Authentication data not found. Please log in again.");
+      }
+
+      const response = await axios.get<NationalityListResponse>(
+        `${API_BASE_URL}/api/method/skillglobe_be.api.portfolio.nationality.get_nationality`,
+        {
+          headers: {
+            Authorization: `token ${authData.apiKey}:${authData.apiSecret}`,
+            Accept: "application/json",
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error: any) {
+      console.error(
+        "Get nationalities error:",
+        error.response?.data || error.message || error
+      );
+      throw error;
+    }
+  };

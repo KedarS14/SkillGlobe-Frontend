@@ -22,6 +22,7 @@ import {
   getPortfolio,
   getAuthData,
 } from "../../app/api/portfolio/getPortfolio";
+import { fetchResumePreviewAPI } from "@/app/api/portfolio/previewResumeAPI";
 
 interface PortfolioProps {
   activeSection?: string;
@@ -70,6 +71,7 @@ export default function Portfolio({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [flag1resume, setFlag1resume] = useState<boolean>(false);
+  const [flag2UpdateResume, setFlag2UpdateResume] = useState<boolean>(false);
   const [resumeUrl, setResumeUrl] = useState<string>("");
 
   // Use props if provided, otherwise use local state
@@ -128,6 +130,11 @@ export default function Portfolio({
   const [experience, setExperience] = useState([]);
   const [certificates, setCertificates] = useState([]);
   const [certificateList, setCertificateList] = useState<any[]>([]);
+
+  // preview resume
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [loading1, setLoading1] = useState(false);
+  const [error1, setError1] = useState<string | null>(null);
 
   // Load saved data from localStorage and API on component mount
   useEffect(() => {
@@ -483,10 +490,17 @@ export default function Portfolio({
 
         if (result.success) {
           updateResumeUploaded(true);
+          setFlag2UpdateResume(false);
+          //make preview url null first to refresh iframe
+          setPdfUrl(null);
+          setLoading1(false);
+          setError1(null);
+          setResumeUrl(result?.data.resume_url);
+
           // After resume is uploaded, automatically switch to personal info section
-          setTimeout(() => {
-            setActiveSection("personal");
-          }, 1000);
+          // setTimeout(() => {
+          //   setActiveSection("personal");
+          // }, 1000);
         } else {
           // Handle upload failure
           console.error("Resume upload failed");
@@ -570,6 +584,20 @@ export default function Portfolio({
   const [isLoading, setIsLoading] = useState(false);
   const [portfolioData, setPortfolioData] = useState<any>(null);
   const [apiError, setApiError] = useState<string | null>(null);
+
+  const handleNext = () => {
+    const sectionFlow: Record<string, string> = {
+      resume: "personal",
+      personal: "education",
+      education: "experience",
+      experience: "certificates",
+      // certificates: null, // or loop back to something else if needed
+    };
+
+    if (activeSection in sectionFlow) {
+      setActiveSection?.(sectionFlow[activeSection]);
+    }
+  };
 
   const handleContinue = async () => {
     setIsLoading(true);
@@ -657,6 +685,44 @@ export default function Portfolio({
     }
   };
 
+  const handleUpdateResume = () => {
+    setFlag2UpdateResume(true);
+  };
+
+  const handlePreview = async () => {
+    setLoading1(true);
+    setError1(null);
+    try {
+      const response = await fetchResumePreviewAPI();
+
+      if (
+        response.message?.status === "success" &&
+        response.message.data?.file_content
+      ) {
+        const { file_content, content_type, file_name } = response.message.data;
+
+        // Convert base64 to Blob
+        const byteCharacters = atob(file_content);
+        const byteNumbers = new Array(byteCharacters.length)
+          .fill(0)
+          .map((_, i) => byteCharacters.charCodeAt(i));
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: content_type });
+
+        // Create object URL and set to state
+        const url = URL.createObjectURL(blob);
+        setPdfUrl(url);
+      } else {
+        setError1("Resume data not available");
+      }
+    } catch (err) {
+      console.error(err);
+      setError1("Failed to fetch resume preview");
+    } finally {
+      setLoading1(false);
+    }
+  };
+
   return (
     <div
       className={`bg-white rounded-xl w-full shadow-sm p-3 space-y-6 font-rubik ${className}`}
@@ -674,53 +740,70 @@ export default function Portfolio({
               information to build your profile
             </p>
 
-            {!resumeUploaded ? (
-              <label
-                className={`block ${
-                  isUploading ? "opacity-50 pointer-events-none" : ""
-                }`}
-              >
-                <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-orange-500 transition-colors cursor-pointer">
-                  {isUploading ? (
-                    <Loader2
-                      className="mx-auto text-blue-500 mb-2 animate-spin"
-                      size={24}
-                    />
-                  ) : (
-                    <Upload className="mx-auto text-gray-400 mb-2" size={24} />
-                  )}
-                  <p className="text-sm font-medium text-gray-900">
-                    {isUploading
-                      ? `Uploading resume (${uploadProgress}%)`
-                      : "Upload your resume"}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    PDF, DOC, DOCX (max 10MB)
-                  </p>
+            {!resumeUploaded || flag2UpdateResume ? (
+              <div>
+                <label
+                  className={`block ${
+                    isUploading ? "opacity-50 pointer-events-none" : ""
+                  }`}
+                >
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-orange-500 transition-colors cursor-pointer">
+                    {isUploading ? (
+                      <Loader2
+                        className="mx-auto text-blue-500 mb-2 animate-spin"
+                        size={24}
+                      />
+                    ) : (
+                      <Upload
+                        className="mx-auto text-gray-400 mb-2"
+                        size={24}
+                      />
+                    )}
+                    <p className="text-sm font-medium text-gray-900">
+                      {isUploading
+                        ? `Uploading resume (${uploadProgress}%)`
+                        : "Upload your resume"}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      PDF, DOC, DOCX (max 10MB)
+                    </p>
 
-                  {/* Show error message if upload failed */}
-                  {error && (
-                    <p className="text-xs text-red-500 mt-2">{error}</p>
-                  )}
+                    {/* Show error message if upload failed */}
+                    {error && (
+                      <p className="text-xs text-red-500 mt-2">{error}</p>
+                    )}
 
-                  {/* Show upload progress bar */}
-                  {isUploading && (
-                    <div className="w-full h-2 bg-gray-200 rounded-full mt-3">
-                      <div
-                        className="h-full bg-blue-500 rounded-full"
-                        style={{ width: `${uploadProgress}%` }}
-                      ></div>
-                    </div>
-                  )}
-                </div>
-                <input
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  onChange={handleResumeUpload}
-                  className="hidden"
-                  disabled={isUploading}
-                />
-              </label>
+                    {/* Show upload progress bar */}
+                    {isUploading && (
+                      <div className="w-full h-2 bg-gray-200 rounded-full mt-3">
+                        <div
+                          className="h-full bg-blue-500 rounded-full"
+                          style={{ width: `${uploadProgress}%` }}
+                        ></div>
+                      </div>
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    onChange={handleResumeUpload}
+                    className="hidden"
+                    disabled={isUploading}
+                  />
+                </label>
+                {/* Cancel Button (only in update mode) */}
+                {flag2UpdateResume && (
+                  <div className="mt-4 flex justify-center">
+                    <button
+                      onClick={() => setFlag2UpdateResume(false)}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg shadow-sm"
+                      disabled={isUploading}
+                    >
+                      Cancel Resume Update
+                    </button>
+                  </div>
+                )}{" "}
+              </div>
             ) : (
               <div className="bg-green-50 p-4 rounded-xl border border-green-200">
                 <div className="flex items-center space-x-3">
@@ -735,27 +818,35 @@ export default function Portfolio({
                       Your resume data has been loaded from your portfolio.
                     </p>
                     {/* Open Resume Button */}
-                    <button
-                      onClick={() =>
-                        window.open(
-                          `${process.env.NEXT_PUBLIC_API_BASE_URL}${resumeUrl}`,
-                          "_blank",
-                          "noopener,noreferrer"
-                        )
-                      }
-                      className="mt-2 px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg shadow-sm"
-                    >
-                      Preview
-                    </button>
-                    {/* Download Button */}
-                    {/* <a
-                      href={`${process.env.NEXT_PUBLIC_API_BASE_URL}${resumeUrl}`}
-                      download
-                      className="px-4 py-2 text-sm font-medium text-green-700 bg-green-100 hover:bg-green-200 rounded-lg shadow-sm"
-                    >
-                      Download
-                    </a> */}
+                    <div className="mt-3 flex space-x-3">
+                      <button
+                        onClick={handlePreview}
+                        disabled={loading1}
+                        className="mt-2 px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg shadow-sm"
+                      >
+                        Preview
+                      </button>
+                      <button
+                        onClick={handleUpdateResume}
+                        className="mt-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm"
+                      >
+                        Update Resume
+                      </button>
+                    </div>
                   </div>
+                </div>
+                {/* preview resume */}
+                <div>
+                  {error1 && <p className="text-red-500 mt-2">{error1}</p>}
+                  {pdfUrl && (
+                    <div className="mt-4 h-[500px] border rounded-lg overflow-hidden">
+                      <iframe
+                        src={pdfUrl}
+                        title="Resume Preview"
+                        className="w-full h-full"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -873,12 +964,14 @@ export default function Portfolio({
           </div>
         )}
 
-        {activeSection === "resume" && flag1resume === true ? (
+        {(activeSection === "resume" && flag1resume === true) ||
+        activeSection === "certificates" ? (
           <div className="flex space-x-3"></div>
         ) : (
           <div className="flex space-x-3">
             <button
-              onClick={handleContinue}
+              onClick={handleNext}
+              // onClick={handleContinue}
               disabled={isLoading}
               className={`max-w-xs mx-auto flex-1 ${
                 isLoading ? "bg-blue-400" : "bg-blue-500 hover:shadow-lg"
@@ -890,7 +983,7 @@ export default function Portfolio({
                   Loading...
                 </>
               ) : (
-                "Submit"
+                `Next`
               )}
             </button>
           </div>
@@ -899,7 +992,8 @@ export default function Portfolio({
 
       {/* Submit Form Modal */}
       <SubmitFormModal
-        isOpen={isModalOpen}
+        isOpen={false}
+        // isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleModalSubmit}
         portfolioData={portfolioData}

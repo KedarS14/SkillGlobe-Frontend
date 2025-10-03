@@ -53,9 +53,18 @@ export default function PersonalInfoForm({
 
   useEffect(() => {
     const getNationalities = async () => {
-      const data = await fetchNationalitiesAPI();
-      if (data.message?.status === "success" && data.message.data) {
-        setNationalities(data.message.data);
+      try {
+        const data = await fetchNationalitiesAPI();
+
+        if (data?.message?.status === "success" && data.message.data) {
+          setNationalities(data.message.data);
+        } else {
+          console.warn("Nationalities API returned no data or failed status.");
+          setNationalities([]); // fallback
+        }
+      } catch (error) {
+        console.error("Failed to fetch nationalities:", error);
+        setNationalities([]); // fallback so UI doesn't break
       }
     };
 

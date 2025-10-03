@@ -426,7 +426,8 @@ export default function EducationForm({
 
   // Validate score is a number or percentage
   const validateScore = (score: string) => {
-    return score === "" || /^(\d+(\.\d+)?|\d+%)$/.test(score);
+    // return score === "" || /^(\d+(\.\d+)?|\d+%)$/.test(score);
+    return score.trim() === "" || /^\d+(\.\d+)?$/.test(score.trim());
   };
 
   // Handle drag end event for reordering education entries
@@ -824,16 +825,17 @@ export default function EducationForm({
                               ? "border-red-500"
                               : "border-gray-300"
                           }`}
-                          placeholder="E.g., 85% or 3.8 CGPA"
+                          placeholder="Eg. 85 for percentage or 3.8 for CGPA"
                         />
                         {entry.score && !validateScore(entry.score) && (
                           <p className="text-xs text-red-500 mt-1">
-                            Enter a valid score (number or percentage)
+                            Enter a valid number
                           </p>
                         )}
                         {validateScore(entry.score) && (
                           <p className="text-xs text-gray-500 mt-1">
-                            %, CGPA or other scoring system
+                            {/* %, CGPA or other scoring system */}
+                            Only provide the score without % or CGPA.
                           </p>
                         )}
                       </div>
@@ -1071,7 +1073,7 @@ export default function EducationForm({
           </>
         )}
         {/* Only show the main submit button when in edit mode, not in list view */}
-        {editMode && (
+        {/* {editMode && !isUpdateMode && (
           <button
             type="button"
             onClick={(e) => {
@@ -1093,8 +1095,9 @@ export default function EducationForm({
               : educationEntries.length === 0
               ? "Skip Education"
               : "Save Education"}
+     
           </button>
-        )}
+        )} */}
       </div>
     </form>
   );

@@ -199,13 +199,13 @@ useEffect(() => {
           : {})
       }));
     } else if (name === 'dateOfBirth') {
-      // Date of birth validation for minimum age of 13
+      // Date of birth validation for minimum age of 15
       setFormData(prev => ({
         ...prev,
         [name]: value
       }));
       
-      // Calculate if the user is at least 13 years old
+      // Calculate if the user is at least 15 years old
       const birthDate = new Date(value);
       const today = new Date();
       let age = today.getFullYear() - birthDate.getFullYear();
@@ -218,7 +218,7 @@ useEffect(() => {
       
       setErrors(prev => ({
         ...prev,
-        [name]: age < 13 ? 'You must be at least 13 years old' : ''
+        [name]: age < 15 ? 'You must be at least 15 years old' : ''
       }));
     } else if (name === 'permanentPincode' || name === 'pincode') {
       const onlyDigits = value.replace(/\D/g, ''); // Remove non-digit characters
