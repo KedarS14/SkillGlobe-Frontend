@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Briefcase, Plus, Search, Users, Archive } from 'lucide-react';
+import { Briefcase, Plus, Search, Users, Archive, Edit, Eye, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import BusinessSidebar from '@/components/dashboard/BusinessSidebar';
 import BusinessDashboardHeader from '@/components/dashboard/BusinessDashboardHeader';
@@ -64,6 +64,7 @@ export default function JobPostingsPage() {
   const [closedJobs, setClosedJobs] = useState<JobPosting[]>([]);
   const [currentJob, setCurrentJob] = useState<JobPosting | null>(null);
   const [editMode, setEditMode] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   // City list state
   const [cityList, setCityList] = useState<City[]>([]);
@@ -337,18 +338,23 @@ export default function JobPostingsPage() {
     setCurrentJob(null);
   };
 
+  // Handle sidebar collapse change
+  const handleSidebarCollapseChange = (isCollapsed: boolean) => {
+    setSidebarCollapsed(isCollapsed);
+  };
+
   return (
     <div className="flex h-screen bg-gray-100 font-rubik">
-      <BusinessSidebar />
+      <BusinessSidebar onCollapseChange={handleSidebarCollapseChange} />
       
-      <div className="flex-1 flex flex-col overflow-hidden pl-64">
-        <BusinessDashboardHeader title="Opportunity Postings" />
+      <div className={`flex-1 flex flex-col overflow-y-auto transition-all duration-300 w-full ${sidebarCollapsed ? 'lg:ml-24' : 'lg:ml-[310px]'}`}>
+        <BusinessDashboardHeader title="Opportunity Posting" />
         
-        <div className="flex-1 bg-gray-50 p-8">
-          <div className="flex justify-end items-center mb-3 gap-3">
+        <div className="flex-1 bg-gray-50 p-2 sm:p-4 md:p-6 pb-20 lg:pb-8 w-full">
+          <div className="flex flex-col sm:flex-row sm:justify-end items-center mb-5 gap-2 w-full">
             <button
               onClick={navigateToClosedOpportunities}
-              className="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg flex items-center transition-all duration-300"
+              className="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg flex items-center justify-center w-full sm:w-auto transition-all duration-300 mb-2 sm:mb-0"
             >
               <Archive size={20} className="mr-1" /> Closed Opportunities
             </button>
@@ -358,7 +364,7 @@ export default function JobPostingsPage() {
                 setCurrentJob(null);
                 setShowModal(true);
               }}
-              className="bg-[#007BCA] hover:bg-[#007BCA] text-white py-2 px-4 rounded-lg flex items-center transition-all duration-300"
+              className="bg-[#007BCA] hover:bg-[#007BCA] text-white py-2 px-4 rounded-lg flex items-center justify-center w-full sm:w-auto transition-all duration-300"
             >
               <Plus size={20} className="mr-1" />New Opportunity Posting
             </button>
@@ -381,8 +387,8 @@ export default function JobPostingsPage() {
             </div>
           )}
           
-          <div className="bg-white rounded-xl shadow-sm mb-6">
-            <div className="p-4 border-b border-gray-200">
+          <div className="bg-white rounded-xl shadow-sm mb-6 w-full">
+            <div className="p-3 sm:p-4 border-b border-gray-200 w-full">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                 <input
@@ -390,13 +396,85 @@ export default function JobPostingsPage() {
                   placeholder="Search job postings..."
                   value={searchQuery}
                   onChange={handleSearchChange}
-                  className="w-1/3 pl-10 pr-4 py-2 bg-gray-50 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
                 />
               </div>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-6">
-              <table className="w-full">
+            <div className="flex-1 overflow-x-auto overflow-y-auto p-2 sm:p-4 w-full">
+              <div className="md:hidden space-y-3 w-full">
+                {/* Mobile card view */}
+                {jobPostings.map((job) => (
+                  <div key={job.id} className="bg-white p-3 rounded-lg shadow-sm border border-gray-100 w-full">
+                    <div className="flex items-center mb-3">
+                      <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                        <Briefcase className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <button
+                        onClick={() => handleTitleClick(job.id)}
+                        className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline cursor-pointer flex items-center gap-2"
+                      >
+                        {job.title}
+                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                          <Users size={12} />
+                          {job.applicantCount || 0}
+                        </span>
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm mb-3">
+                      <div>
+                        <span className="text-gray-500 block">Skill Category:</span>
+                        <span>{job.skillCategory || 'Not specified'}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500 block">Employment Type:</span>
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                          {job.employmentType || 'Not specified'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500 block">Work Mode:</span>
+                        <span>{job.workMode || 'Not specified'}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500 block">Experience:</span>
+                        <span>{job.experienceRequired || 'Not specified'}</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-end space-x-2 border-t border-gray-100 pt-3">
+                      {/* <button
+                        onClick={() => {
+                          const selectedJob = jobPostings.find(j => j.id === job.id);
+                          if (selectedJob) handleEditJob(selectedJob);
+                        }}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          const selectedJob = jobPostings.find(j => j.id === job.id);
+                          if (selectedJob) handlePreviewJob(selectedJob);
+                        }}
+                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                      >
+                        <Eye size={16} />
+                      </button> */}
+                      <button
+                        onClick={() => {
+                          const selectedJob = jobPostings.find(j => j.id === job.id);
+                          if (selectedJob) handleCloseOpportunity(selectedJob);
+                        }}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <table className="hidden md:table w-full">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>

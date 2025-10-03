@@ -346,24 +346,33 @@ export default function BusinessDashboardPage() {
 
   // State for mobile sidebar toggle
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Toggle mobile menu
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
 
+  // Handle sidebar collapse change
+  const handleSidebarCollapseChange = (isCollapsed: boolean) => {
+    setSidebarCollapsed(isCollapsed);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 font-rubik">
-      <BusinessSidebar mobileOpen={mobileMenuOpen} />
+      <BusinessSidebar 
+        mobileOpen={mobileMenuOpen} 
+        onCollapseChange={handleSidebarCollapseChange}
+      />
 
-      <div className="lg:pl-64 pt-1">
+      <div className={`min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-24' : 'lg:pl-[310px]'}`}>
         <BusinessDashboardHeader
-          title="Organization Insights"
+          title="Dashboard"
           onMenuClick={toggleMobileMenu}
         />
 
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50">
-          <div className="mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <main className="overflow-y-auto bg-gray-50 w-full">
+          <div className="px-2 sm:px-4 md:px-6 py-4 pb-20 lg:pb-6">
             {/* Welcome Section */}
             <div className="mb-8">
               <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">

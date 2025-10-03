@@ -6,7 +6,8 @@ import BusinessSidebar from '@/components/dashboard/BusinessSidebar';
 import BusinessDashboardHeader from '@/components/dashboard/BusinessDashboardHeader';
 
 export default function DocumentVerifyPage() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState('');
   const [documentNumber, setDocumentNumber] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
@@ -55,17 +56,22 @@ export default function DocumentVerifyPage() {
     }, 3000);
   };
 
+  // Handle sidebar collapse change
+  const handleSidebarCollapseChange = (isCollapsed: boolean) => {
+    setSidebarCollapsed(isCollapsed);
+  };
+
   return (
     <div className="flex h-screen bg-gray-50 font-rubik">
-      <BusinessSidebar />
+      {isSidebarVisible && <BusinessSidebar onCollapseChange={handleSidebarCollapseChange} />}
       
-      <div className="flex-1 flex flex-col overflow-hidden md:ml-64 transition-all duration-300" style={{ marginLeft: isMenuOpen ? '0' : '' }}>
+      <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 w-full ${isSidebarVisible ? (sidebarCollapsed ? 'lg:ml-24' : 'lg:ml-[310px]') : 'ml-0'}`}>
         <BusinessDashboardHeader 
-          title="Document Verification" 
-          onMenuClick={() => setIsMenuOpen(!isMenuOpen)} 
+          title="My Identity" 
+          onMenuClick={() => setIsSidebarVisible(!isSidebarVisible)} 
         />
         
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-2 sm:p-4 md:p-6 pb-20 lg:pb-6 w-full">
           <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-sm p-8">
             <div className="space-y-6">
               <div className="text-center">

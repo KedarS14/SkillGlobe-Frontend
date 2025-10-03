@@ -20,6 +20,7 @@ const organizationSizes = [
 
 export default function CompanyProfilePage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isMobile = typeof window !== 'undefined' ? window.innerWidth < 768 : false;
   const [data, setData] = useState<any>({});
   const [logo, setLogo] = useState<File | null>(null);
@@ -352,11 +353,18 @@ export default function CompanyProfilePage() {
     }
   };
 
+  // Handle sidebar collapse change
+  const handleSidebarCollapseChange = (isCollapsed: boolean) => {
+    setSidebarCollapsed(isCollapsed);
+  };
+
   return (
     <div className="flex h-screen bg-gray-50 font-rubik">
-      <BusinessSidebar />
+      <BusinessSidebar onCollapseChange={handleSidebarCollapseChange} />
       
-      <div className="flex-1 flex flex-col overflow-hidden md:ml-64 transition-all duration-300" style={{ marginLeft: isMenuOpen ? '0' : '' }}>
+      <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${
+        sidebarCollapsed ? 'md:ml-24' : 'md:ml-[310px]'
+      }`} style={{ marginLeft: isMenuOpen ? '0' : '' }}>
         <BusinessDashboardHeader 
           title="Company Profile" 
           onMenuClick={() => setIsMenuOpen(!isMenuOpen)} 

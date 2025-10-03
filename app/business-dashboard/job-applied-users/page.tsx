@@ -50,40 +50,35 @@ export default function JobAppliedUsersPage() {
     totalProfiles,
     fetchProfilesByOpportunity,
     updateApplicantStatus,
-    clearError,
-    resetStore,
-    searchQuery,
-    setSearchQuery,
+    resetStore
   } = useProfilesByOpportunityStore();
-
-  // Local UI state
+  
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(
     null
   );
-  const [showProfileModal, setShowProfileModal] = useState(false);
-  const [detailedProfile, setDetailedProfile] = useState<ResumeData | null>(
-    null
-  );
+  const [detailedProfile, setDetailedProfile] = useState<ResumeData | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Fetch data on component mount
   useEffect(() => {
     if (jobId) {
-      fetchProfilesByOpportunity(jobId);
+      fetchProfilesByOpportunity(jobId, searchTerm);
     }
 
     // Cleanup on unmount
     return () => {
       resetStore();
     };
-  }, [jobId, fetchProfilesByOpportunity, resetStore]);
+  }, [jobId, fetchProfilesByOpportunity, resetStore, searchTerm]);
   
   // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+    setSearchTerm(e.target.value);
   };
   
   // Debounced search effect
@@ -91,11 +86,11 @@ export default function JobAppliedUsersPage() {
     if (!jobId) return;
     
     const timer = setTimeout(() => {
-      fetchProfilesByOpportunity(jobId);
+      fetchProfilesByOpportunity(jobId, searchTerm);
     }, 500); // 500ms debounce
     
     return () => clearTimeout(timer);
-  }, [searchQuery, fetchProfilesByOpportunity, jobId]);
+  }, [searchTerm, fetchProfilesByOpportunity, jobId]);
 
   const handleStatusChange = async (
     applicantId: string,
@@ -186,7 +181,7 @@ export default function JobAppliedUsersPage() {
     }
   };
 
-  const filteredApplicants = (applicants || []).filter((applicant) => {
+  const filteredApplicants = (applicants || []).filter((applicant: Applicant) => {
     // We only need to filter by status now, as search is handled by the API
     const matchesStatus =
       statusFilter === "all" || 
@@ -198,21 +193,21 @@ export default function JobAppliedUsersPage() {
 
   const statusCounts = {
     all: applicants?.length || 0,
-    pending: applicants?.filter((a) => a.status === "pending" || a.status === "interested").length || 0,
+    pending: applicants?.filter((a: Applicant) => a.status === "pending" || a.status === "interested").length || 0,
     shortlisted:
-      applicants?.filter((a) => a.status === "shortlisted").length || 0,
-    rejected: applicants?.filter((a) => a.status === "rejected").length || 0,
-    hired: applicants?.filter((a) => a.status === "hired").length || 0,
+      applicants?.filter((a: Applicant) => a.status === "shortlisted").length || 0,
+    rejected: applicants?.filter((a: Applicant) => a.status === "rejected").length || 0,
+    hired: applicants?.filter((a: Applicant) => a.status === "hired").length || 0,
   };
 
   return (
-    <div className="bg-gray-100 font-rubik">
-      <BusinessSidebar />
+    <div className="flex h-screen bg-gray-100 font-rubik">
+      <BusinessSidebar onCollapseChange={setSidebarCollapsed} />
 
-      <div className="pl-64">
+      <div className={`flex-1 flex flex-col overflow-y-auto transition-all duration-300 w-full ${sidebarCollapsed ? 'lg:ml-24' : 'lg:ml-[310px]'}`}>
         <BusinessDashboardHeader title="Opportunity Applicants" />
 
-        <div className="bg-gray-50 p-8">
+        <div className="flex-1 bg-gray-50 p-2 sm:p-4 md:p-6 pb-20 lg:pb-8 w-full">
           {/* Header Section */}
           <div className="mb-6">
             <button
@@ -223,13 +218,13 @@ export default function JobAppliedUsersPage() {
             </button>
 
             {jobDetails && (
-              <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-                <div className="flex justify-between items-start">
+              <div className="bg-white rounded-xl shadow-sm p-3 sm:p-4 md:p-6 mb-4 sm:mb-6 w-full">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
                   <div>
                     <h1 className="text-2xl font-bold text-gray-900 mb-2">
                       {jobDetails.title}
                     </h1>
-                    <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                    <div className="flex flex-wrap gap-2 sm:gap-4 text-sm text-gray-600">
                       <span className="flex items-center gap-1">
                         <MapPin size={16} /> {jobDetails.location}
                       </span>
@@ -259,23 +254,23 @@ export default function JobAppliedUsersPage() {
           </div>
 
           {/* Filters and Search */}
-          <div className="bg-white rounded-xl shadow-sm mb-6">
-            <div className="p-4 border-b border-gray-200">
-              <div className="flex flex-col gap-4">
+          <div className="bg-white rounded-xl shadow-sm mb-4 sm:mb-6 w-full">
+            <div className="p-3 sm:p-4 border-b border-gray-200">
+              <div className="flex flex-col gap-3 sm:gap-4">
                 {/* Search Input */}
-                <div className="w-1/3 relative">
+                <div className="w-full relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                   <input
                     type="text"
                     placeholder="Search applicants by city or experience..."
-                    value={searchQuery}
+                    value={searchTerm}
                     onChange={handleSearchChange}
                     className="w-full pl-10 pr-4 py-2 bg-gray-50 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
                   />
                 </div>
                 
                 {/* Status Filters */}
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-2 flex-wrap w-full overflow-x-auto pb-1">
                   {Object.entries(statusCounts).map(([status, count]) => (
                     <button
                       key={status}
@@ -295,7 +290,7 @@ export default function JobAppliedUsersPage() {
             </div>
 
             {/* Applicants List */}
-            <div className="p-6 max-h-none">
+            <div className="p-3 sm:p-4 md:p-6 max-h-none">
               {/* Loading State */}
               {isLoading && (
                 <div className="flex items-center justify-center py-12">
@@ -336,22 +331,22 @@ export default function JobAppliedUsersPage() {
 
               {/* Applicants List */}
               {!isLoading && !error && filteredApplicants.length > 0 && (
-                <div className="space-y-4 pb-8">
+                <div className="space-y-3 sm:space-y-4 pb-8">
                   {filteredApplicants.map((applicant) => (
                     <div
                       key={applicant.id}
-                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                      className="border border-gray-200 rounded-lg p-3 sm:p-4 hover:shadow-md transition-shadow"
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                            <User className="w-6 h-6 text-blue-600" />
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div className="flex items-start sm:items-center space-x-3 sm:space-x-4">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <User className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
                           </div>
-                          <div>
+                          <div className="flex-1 min-w-0">
                             <h3 className="font-semibold text-gray-900">
                               {applicant.name}
                             </h3>
-                            <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs sm:text-sm text-gray-600 mt-1">
                               <span className="flex items-center gap-1">
                                 <Mail size={14} /> {applicant.email}
                               </span>
@@ -362,7 +357,7 @@ export default function JobAppliedUsersPage() {
                                 <MapPin size={14} /> {applicant.location || "-"}
                               </span>
                             </div>
-                            <div className="flex items-center gap-2 mt-2">
+                            <div className="flex flex-wrap items-center gap-2 mt-2">
                               <span className="text-sm text-gray-600">
                                 Experience: {applicant.experience}
                               </span>
@@ -385,7 +380,7 @@ export default function JobAppliedUsersPage() {
                                 </div>
                               )}
                             </div>
-                            <div className="flex flex-wrap gap-1 mt-2">
+                            <div className="flex flex-wrap gap-1 mt-2 max-w-full overflow-hidden">
                               {applicant.skills
                                 .slice(0, 4)
                                 .map((skill, index) => (
@@ -405,7 +400,7 @@ export default function JobAppliedUsersPage() {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 justify-end">
                           <span
                             className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
                               applicant.status.toLowerCase()
@@ -415,7 +410,7 @@ export default function JobAppliedUsersPage() {
                               applicant.status.slice(1)}
                           </span>
 
-                          <div className="flex gap-2">
+                          <div className="flex gap-1 sm:gap-2">
                             {applicant.status !== "pending" && applicant.status !== "interested" && (
                                 <button
                                   onClick={() => handleViewProfile(applicant)}
@@ -489,7 +484,7 @@ export default function JobAppliedUsersPage() {
       {/* Profile Modal */}
       {showProfileModal && selectedApplicant && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-xl p-4 sm:p-6 w-full max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-start mb-6">
               <h3 className="text-2xl font-semibold text-gray-900">
                 {detailedProfile

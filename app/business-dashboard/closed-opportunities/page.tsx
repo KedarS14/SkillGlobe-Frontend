@@ -31,6 +31,7 @@ interface JobPosting {
 
 export default function ClosedOpportunitiesPage() {
   const router = useRouter();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [closedJobs, setClosedJobs] = useState<JobPosting[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -105,23 +106,28 @@ export default function ClosedOpportunitiesPage() {
     job.location.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Handle sidebar collapse change
+  const handleSidebarCollapseChange = (isCollapsed: boolean) => {
+    setSidebarCollapsed(isCollapsed);
+  };
+
   return (
     <div className="flex h-screen bg-gray-100 font-rubik">
-      <BusinessSidebar />
+      <BusinessSidebar onCollapseChange={handleSidebarCollapseChange} />
       
-      <div className="flex-1 flex flex-col overflow-hidden pl-64">
+      <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 w-full ${sidebarCollapsed ? 'lg:ml-24' : 'lg:ml-[310px]'}`}>
         <BusinessDashboardHeader title="Closed Opportunities" />
         
-        <div className="flex-1 bg-gray-50 p-8">
-          <div className="flex justify-between items-center mb-6">
+        <div className="flex-1 bg-gray-50 p-2 sm:p-4 md:p-6 pb-20 lg:pb-8 w-full overflow-y-auto">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3 sm:gap-0">
             <button
               onClick={navigateBack}
-              className="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg flex items-center transition-all duration-300"
+              className="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg flex items-center justify-center w-full sm:w-auto transition-all duration-300"
             >
               <ArrowLeft size={20} className="mr-1" /> Back to Opportunity Postings
             </button>
             
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 text-center sm:text-right w-full sm:w-auto">
               Total Closed Opportunities: {closedJobs.length}
             </div>
           </div>
@@ -157,7 +163,7 @@ export default function ClosedOpportunitiesPage() {
               </div>
             </div> */}
             
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
               {filteredJobs.length === 0 && !isLoading && !error ? (
                 <div className="text-center py-8">
                   <div className="text-gray-500 mb-2">No closed opportunities found</div>
@@ -166,7 +172,52 @@ export default function ClosedOpportunitiesPage() {
                   </div>
                 </div>
               ) : (
-                <table className="w-full">
+                <>
+                  {/* Mobile card view */}
+                  <div className="md:hidden space-y-3 w-full">
+                    {filteredJobs.map((job) => (
+                      <div key={job.id} className="bg-white p-3 rounded-lg shadow-sm border border-gray-100 w-full">
+                        <div className="flex items-center mb-3">
+                          <div className="flex-shrink-0 h-10 w-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                            <Briefcase className="h-5 w-5 text-red-600" />
+                          </div>
+                          <button
+                            onClick={() => handleTitleClick(job.id)}
+                            className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline cursor-pointer flex items-center gap-2"
+                          >
+                            {job.title}
+                            <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                              <Users size={12} />
+                              {job.applicantCount || 0}
+                            </span>
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-sm mb-3">
+                          <div>
+                            <span className="text-gray-500 block">Skill Category:</span>
+                            <span>{job.skillCategory || 'Not specified'}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-500 block">Employment Type:</span>
+                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                              {job.employmentType || 'Not specified'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-gray-500 block">Work Mode:</span>
+                            <span>{job.workMode || 'Not specified'}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-500 block">Experience:</span>
+                            <span>{job.experienceRequired || 'Not specified'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Desktop table view */}
+                  <table className="hidden md:table w-full">
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
@@ -224,6 +275,7 @@ export default function ClosedOpportunitiesPage() {
                     ))}
                   </tbody>
                 </table>
+                </>
               )}
             </div>
           </div>

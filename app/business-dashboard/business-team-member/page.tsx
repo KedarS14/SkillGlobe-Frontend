@@ -16,7 +16,8 @@ type TeamMember = {
 };
 
 export default function AdminAccessPage() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -163,17 +164,43 @@ export default function AdminAccessPage() {
     }
   };
 
+  // Handle sidebar collapse change
+  const handleSidebarCollapseChange = (isCollapsed: boolean) => {
+    setSidebarCollapsed(isCollapsed);
+  };
+
+  const useIsMobile = () => {
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+      const checkIsMobile = () => {
+        setIsMobile(window.innerWidth < 768);
+      };
+
+      checkIsMobile();
+      window.addEventListener('resize', checkIsMobile);
+
+      return () => {
+        window.removeEventListener('resize', checkIsMobile);
+      };
+    }, []);
+
+    return isMobile;
+  };
+
+  const isMobile = useIsMobile();
+
   return (
     <div className="flex h-screen bg-gray-50 font-rubik">
-      <BusinessSidebar />
+      {isSidebarVisible && <BusinessSidebar onCollapseChange={handleSidebarCollapseChange} />}
       
-      <div className="flex-1 flex flex-col overflow-hidden md:ml-64 transition-all duration-300" style={{ marginLeft: isMenuOpen ? '0' : '' }}>
+      <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 w-full ${isSidebarVisible ? (sidebarCollapsed ? 'lg:ml-24' : 'lg:ml-[310px]') : 'ml-0'}`}>
         <BusinessDashboardHeader 
           title="Admin Access" 
-          onMenuClick={() => setIsMenuOpen(!isMenuOpen)} 
+          onMenuClick={() => setIsSidebarVisible(!isSidebarVisible)} 
         />
         
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-2 sm:p-4 md:p-6 pb-20 lg:pb-6 w-full">
           <div className="max-w-full mx-auto bg-white rounded-xl shadow-sm p-8">
             <h2 className="text-2xl font-bold text-gray-900">Team Members</h2>
             <div className="flex justify-between items-center mb-6 mt-5">
@@ -188,13 +215,15 @@ export default function AdminAccessPage() {
                   className="w-full pl-10 pr-4 py-2 bg-gray-50 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
                 />
               </div>
-              <button 
-                onClick={openAddModal}
-                className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg flex items-center"
-              >
-                <UserPlus size={18} className="mr-2" />
-                Add Member
-              </button>
+              <button
+  onClick={openAddModal}
+  className="bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg flex items-center justify-center
+             p-3 md:py-2 md:px-4"
+>
+  <UserPlus size={18} className="mr-0 md:mr-2" />
+  <span className="hidden md:inline">Add Member</span>
+</button>
+
             </div>
 
             {/* Loading State */}
