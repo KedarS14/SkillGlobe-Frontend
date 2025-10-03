@@ -56,7 +56,7 @@ export default function CompactMarketMetrics({ onViewDetails }: CompactMarketMet
       {/* Compact Header with Key Metric */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-xl font-semibold text-gray-900">Profile Insightsss</h3>
+          <h3 className="text-xl font-semibold text-gray-900">Profile Insights</h3>
         </div>
       </div>
 
